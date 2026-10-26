@@ -1,0 +1,440 @@
+#!/bin/sh
+# srm - Safe RM
+# Cross-platform safe removal command that moves files to native Trash
+# Copyright (c) 2026 live-by-unix
+# BSD 3-Clause License
+
+set -eu
+
+# Version
+SRM_VERSION="1.0.0"
+
+# Exit codes
+EXIT_SUCCESS=0
+EXIT_ERROR=1
+EXIT_USAGE=2
+
+# Default options
+FORCE=0
+INTERACTIVE=0
+INTERACTIVE_ONCE=0
+RECURSIVE=0
+EMPTY_DIR=0
+VERBOSE=0
+PRESERVE_ROOT=1
+END_OF_OPTIONS=0
+
+# Statistics
+total_files=0
+total_success=0
+total_failure=0
+
+# Print error message to stderr
+error() {
+    printf '%s\n' "srm: $*" >&2
+}
+
+# Print verbose message
+verbose() {
+    if [ "$VERBOSE" -eq 1 ]; then
+        printf '%s\n' "srm: $*"
+    fi
+}
+
+# Print usage information (internal use only)
+print_usage() {
+    printf '%s\n' "Usage: srm [OPTION]... FILE..."
+    printf '%s\n' "Move files to the native Trash instead of permanently deleting them."
+    printf '\n%s\n' "Options:"
+    printf '%s\n' "  -f, --force         ignore nonexistent files and arguments, never prompt"
+    printf '%s\n' "  -i, --interactive   prompt before every removal"
+    printf '%s\n' "  -I                  prompt once before removing more than three files"
+    printf '%s\n' "  -r, -R, --recursive  remove directories and their contents recursively"
+    printf '%s\n' "  -d, --dir           remove empty directories"
+    printf '%s\n' "  -v, --verbose       explain what is being done"
+    printf '%s\n' "      --preserve-root  fail if operating on '/' (default)"
+    printf '%s\n' "      --no-preserve-root  do not treat '/' specially"
+    printf '%s\n' "  --                  end of options"
+    printf '\n%s\n' "For help and information, use 'srmi --help'"
+}
+
+# Detect operating system
+detect_platform() {
+    case "$(uname -s)" in
+        Darwin)
+            echo "macos"
+            ;;
+        Linux)
+            echo "linux"
+            ;;
+        CYGWIN*|MINGW*|MSYS*)
+            echo "windows"
+            ;;
+        *)
+            echo "unknown"
+            ;;
+    esac
+}
+
+# Check if path is a dangerous root
+is_dangerous_path() {
+    path="$1"
+
+    # Normalize path
+    normalized_path="$(cd "$path" 2>/dev/null && pwd)" || true
+
+    # Check for root filesystem
+    case "$normalized_path" in
+        "/"|"//")
+            return 0
+            ;;
+    esac
+
+    # Check for drive roots on Windows/Cygwin
+    case "$(uname -s)" in
+        CYGWIN*|MINGW*|MSYS*)
+            case "$normalized_path" in
+                [A-Za-z]:|/[A-Za-z])
+                    return 0
+                    ;;
+            esac
+            ;;
+    esac
+
+    # Check for home directory root
+    if [ "$normalized_path" = "$HOME" ]; then
+        return 0
+    fi
+
+    return 1
+}
+
+# macOS Trash implementation using native helper
+trash_macos() {
+    file="$1"
+
+    # Use the native macOS helper if available
+    if command -v srm-macos >/dev/null 2>&1; then
+        if srm-macos "$file"; then
+            return 0
+        else
+            return 1
+        fi
+    else
+        # Fallback: move to ~/.Trash directly
+        trash_dir="$HOME/.Trash"
+        if [ ! -d "$trash_dir" ]; then
+            error "Trash directory not found: $trash_dir"
+            return 1
+        fi
+
+        filename="$(basename "$file")"
+        dest="$trash_dir/$filename"
+
+        # Handle filename collisions
+        if [ -e "$dest" ]; then
+            counter=1
+            while [ -e "$trash_dir/${filename}.${counter}" ]; do
+                counter=$((counter + 1))
+            done
+            dest="$trash_dir/${filename}.${counter}"
+        fi
+
+        if mv "$file" "$dest"; then
+            verbose "moved '$file' to Trash"
+            return 0
+        else
+            error "failed to move '$file' to Trash"
+            return 1
+        fi
+    fi
+}
+
+# Linux Trash implementation (FreeDesktop.org spec)
+trash_linux() {
+    file="$1"
+
+    # Determine Trash location
+    if [ -n "${XDG_DATA_HOME:-}" ]; then
+        trash_base="$XDG_DATA_HOME"
+    else
+        trash_base="$HOME/.local/share"
+    fi
+
+    trash_dir="$trash_base/Trash"
+
+    # Create Trash structure if needed
+    if [ ! -d "$trash_dir" ]; then
+        mkdir -p "$trash_dir/files" "$trash_dir/info" 2>/dev/null || {
+            error "failed to create Trash directory: $trash_dir"
+            return 1
+        }
+    fi
+
+    # Get absolute path
+    abs_file="$(cd "$(dirname "$file")" 2>/dev/null && pwd)/$(basename "$file")" || {
+        error "cannot resolve path: $file"
+        return 1
+    }
+
+    # Generate unique trash filename
+    filename="$(basename "$file")"
+    counter=1
+    dest="$trash_dir/files/$filename"
+
+    while [ -e "$dest" ]; do
+        dest="$trash_dir/files/${filename}.${counter}"
+        counter=$((counter + 1))
+    done
+
+    # Create .trashinfo metadata
+    info_file="$trash_dir/info/$(basename "$dest").trashinfo"
+    printf '[Trash Info]\n' > "$info_file"
+    printf 'Path=%s\n' "$abs_file" >> "$info_file"
+    printf 'DeletionDate=%s\n' "$(date +%Y-%m-%dT%H:%M:%S)" >> "$info_file"
+
+    # Move file to Trash
+    if mv "$file" "$dest"; then
+        verbose "moved '$file' to Trash"
+        return 0
+    else
+        rm -f "$info_file"
+        error "failed to move '$file' to Trash"
+        return 1
+    fi
+}
+
+# Trash implementation dispatcher
+trash_file() {
+    file="$1"
+    platform="$(detect_platform)"
+
+    case "$platform" in
+        macos)
+            trash_macos "$file"
+            ;;
+        linux)
+            trash_linux "$file"
+            ;;
+        windows)
+            error "Use srm.bat on Windows"
+            return 1
+            ;;
+        *)
+            error "unsupported platform: $platform"
+            return 1
+            ;;
+    esac
+}
+
+# Remove a single file or directory
+remove_item() {
+    item="$1"
+
+    # Check if item exists
+    if [ ! -e "$item" ] && [ ! -L "$item" ]; then
+        if [ "$FORCE" -eq 0 ]; then
+            error "cannot remove '$item': No such file or directory"
+            total_failure=$((total_failure + 1))
+            return 1
+        else
+            return 0
+        fi
+    fi
+
+    # Check for dangerous paths
+    if [ "$PRESERVE_ROOT" -eq 1 ] && is_dangerous_path "$item"; then
+        error "it is dangerous to operate recursively on '$item'"
+        error "use --no-preserve-root to override this failsafe"
+        total_failure=$((total_failure + 1))
+        return 1
+    fi
+
+    # Handle directories
+    if [ -d "$item" ]; then
+        if [ "$RECURSIVE" -eq 0 ] && [ "$EMPTY_DIR" -eq 0 ]; then
+            error "cannot remove '$item': is a directory"
+            total_failure=$((total_failure + 1))
+            return 1
+        fi
+
+        if [ "$RECURSIVE" -eq 0 ] && [ "$EMPTY_DIR" -eq 1 ]; then
+            # Check if directory is empty
+            if [ -n "$(ls -A "$item" 2>/dev/null)" ]; then
+                error "cannot remove '$item': Directory not empty"
+                total_failure=$((total_failure + 1))
+                return 1
+            fi
+        fi
+    fi
+
+    # Interactive mode
+    if [ "$INTERACTIVE" -eq 1 ]; then
+        printf '%s' "srm: remove regular file '$item'? "
+        read -r response || {
+            error "read failed"
+            total_failure=$((total_failure + 1))
+            return 1
+        }
+        case "$response" in
+            [yY]|[yY][eE][sS])
+                ;;
+            *)
+                return 0
+                ;;
+        esac
+    fi
+
+    # Move to Trash
+    if trash_file "$item"; then
+        total_success=$((total_success + 1))
+        return 0
+    else
+        total_failure=$((total_failure + 1))
+        return 1
+    fi
+}
+
+# Parse options - collect files only
+parse_options() {
+    # Handle interactive once mode first
+    if [ "$INTERACTIVE_ONCE" -eq 1 ] && [ $# -gt 3 ]; then
+        printf '%s' "srm: remove all arguments? "
+        read -r response || {
+            error "read failed"
+            exit "$EXIT_ERROR"
+        }
+        case "$response" in
+            [yY]|[yY][eE][sS])
+                ;;
+            *)
+                exit "$EXIT_SUCCESS"
+                ;;
+        esac
+    fi
+
+    while [ $# -gt 0 ]; do
+        arg="$1"
+
+        if [ "$END_OF_OPTIONS" -eq 1 ]; then
+            # All remaining arguments are files
+            remove_item "$arg"
+            shift
+            continue
+        fi
+
+        case "$arg" in
+            -f|--force)
+                FORCE=1
+                shift
+                ;;
+            -i|--interactive)
+                INTERACTIVE=1
+                shift
+                ;;
+            -I)
+                INTERACTIVE_ONCE=1
+                shift
+                ;;
+            -r|-R|--recursive)
+                RECURSIVE=1
+                shift
+                ;;
+            -d|--dir)
+                EMPTY_DIR=1
+                shift
+                ;;
+            -v|--verbose)
+                VERBOSE=1
+                shift
+                ;;
+            --preserve-root)
+                PRESERVE_ROOT=1
+                shift
+                ;;
+            --no-preserve-root)
+                PRESERVE_ROOT=0
+                shift
+                ;;
+            --)
+                END_OF_OPTIONS=1
+                shift
+                ;;
+            --help|--version)
+                # These are NOT reserved - treat as filenames
+                remove_item "$arg"
+                shift
+                ;;
+            -*)
+                # Short option combinations
+                oldifs="$IFS"
+                IFS=''
+                rest="$arg"
+                rest="${rest#-}"  # Remove leading hyphen
+                shift
+
+                while [ -n "$rest" ]; do
+                    opt="${rest%"${rest#?}"}"  # First character
+                    rest="${rest#?}"           # Rest of string
+
+                    case "$opt" in
+                        f)
+                            FORCE=1
+                            ;;
+                        i)
+                            INTERACTIVE=1
+                            ;;
+                        I)
+                            INTERACTIVE_ONCE=1
+                            ;;
+                        r|R)
+                            RECURSIVE=1
+                            ;;
+                        d)
+                            EMPTY_DIR=1
+                            ;;
+                        v)
+                            VERBOSE=1
+                            ;;
+                        *)
+                            error "invalid option -- '$opt'"
+                            print_usage
+                            exit "$EXIT_USAGE"
+                            ;;
+                    esac
+                done
+                IFS="$oldifs"
+                ;;
+            *)
+                # Not an option - treat as file
+                remove_item "$arg"
+                shift
+                ;;
+        esac
+    done
+}
+
+# Main
+main() {
+    # Parse command line (includes file removal)
+    parse_options "$@"
+
+    # Exit with error if no files specified
+    if [ "$total_files" -eq 0 ] && [ "$total_success" -eq 0 ] && [ "$total_failure" -eq 0 ]; then
+        if [ "$FORCE" -eq 0 ]; then
+            error "missing operand"
+            print_usage
+            exit "$EXIT_USAGE"
+        fi
+    fi
+
+    # Exit with error if any failures
+    if [ "$total_failure" -gt 0 ]; then
+        exit "$EXIT_ERROR"
+    fi
+
+    exit "$EXIT_SUCCESS"
+}
+
+# Run main
+main "$@"

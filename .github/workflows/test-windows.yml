@@ -1,0 +1,27 @@
+name: Test Windows
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup MSVC
+      uses: microsoft/setup-msbuild@v1.1
+
+    - name: Build Windows helper
+      run: |
+        cd src
+        build-windows.bat
+
+    - name: Test batch scripts
+      run: |
+        srmi.bat --version
+        srmi.bat --help

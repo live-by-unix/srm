@@ -1,0 +1,51 @@
+# Compiled binaries (srm-macos is pre-built for convenience)
+srm-windows.exe
+*.o
+*.obj
+*.exe
+*.dll
+*.dylib
+*.so
+
+# Build artifacts
+build/
+dist/
+*.dSYM/
+
+# Test artifacts
+test-results/
+coverage/
+*.log
+*.tmp
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Python (if any for tooling)
+__pycache__/
+*.py[cod]
+*.egg-info/
+venv/
+.venv/
+
+# Node (if any for website)
+node_modules/
+npm-debug.log
+package-lock.json
+
+# Temporary files
+*.tmp
+*.temp
+*~
+
+# Install artifacts
+*.install

@@ -1,0 +1,28 @@
+name: Test macOS
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Build macOS helper
+      run: |
+        cd src
+        ./build-macos.sh
+
+    - name: Run shell tests
+      run: |
+        cd tests/shell
+        ./test-basics.sh
+
+    - name: Test srm
+      run: |
+        ./srm --version 2>/dev/null || ./srmi --version

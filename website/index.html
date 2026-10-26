@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="srm (Safe RM) - A cross-platform alternative to rm that moves files to native Trash instead of permanently deleting them.">
+    <meta name="keywords" content="srm, safe rm, trash, recycle bin, cross-platform, command line, cli tool">
+    <meta name="author" content="live-by-unix">
+    <meta name="robots" content="index, follow">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="srm - Safe RM">
+    <meta property="og:description" content="A cross-platform alternative to rm that moves files to native Trash">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://live-by-unix.github.io/srm">
+    <meta property="og:image" content="https://live-by-unix.github.io/srm/assets/og-image.png">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="srm - Safe RM">
+    <meta name="twitter:description" content="A cross-platform alternative to rm that moves files to native Trash">
+
+    <title>srm - Safe RM | Cross-Platform Safe Deletion</title>
+
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <div class="logo">
+                <span class="logo-text">srm</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#demo">Demo</a></li>
+                <li><a href="#install">Install</a></li>
+                <li><a href="#docs">Docs</a></li>
+                <li><a href="https://github.com/live-by-unix/srm" class="github-link">GitHub</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="container">
+                <div class="hero-content">
+                    <h1>Safe RM</h1>
+                    <p class="hero-subtitle">Move files to Trash instead of permanently deleting them</p>
+                    <p class="hero-description">
+                        srm is a cross-platform alternative to <code>rm</code> that provides a safety layer
+                        by moving files to the native Trash or Recycle Bin. Recoverable, familiar, and safe.
+                    </p>
+                    <div class="hero-buttons">
+                        <a href="#install" class="btn btn-primary">Install srm</a>
+                        <a href="#demo" class="btn btn-secondary">Try Demo</a>
+                    </div>
+                </div>
+                <div class="hero-terminal">
+                    <div class="terminal-window">
+                        <div class="terminal-header">
+                            <div class="terminal-buttons">
+                                <span class="terminal-button close"></span>
+                                <span class="terminal-button minimize"></span>
+                                <span class="terminal-button maximize"></span>
+                            </div>
+                            <span class="terminal-title">Terminal</span>
+                        </div>
+                        <div class="terminal-body">
+                            <div class="terminal-line">
+                                <span class="prompt">$</span>
+                                <span class="command">srm document.txt</span>
+                            </div>
+                            <div class="terminal-line output">
+                                <span class="prompt">$</span>
+                                <span class="command">srm -r old-project/</span>
+                            </div>
+                            <div class="terminal-line output">
+                                <span class="prompt">$</span>
+                                <span class="command">srm -v *.log</span>
+                                <span class="output-text">srm: moved 'error.log' to Trash</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Comparison Section -->
+        <section class="comparison">
+            <div class="container">
+                <h2>rm vs srm</h2>
+                <div class="comparison-table">
+                    <div class="comparison-card rm">
+                        <h3>rm</h3>
+                        <ul>
+                            <li class="negative">Permanently deletes files</li>
+                            <li class="negative">Cannot recover files</li>
+                            <li class="negative">Dangerous mistakes permanent</li>
+                            <li class="positive">Fast and efficient</li>
+                            <li class="positive">Standard Unix tool</li>
+                        </ul>
+                    </div>
+                    <div class="comparison-card srm">
+                        <h3>srm</h3>
+                        <ul>
+                            <li class="positive">Moves to Trash/Recycle Bin</li>
+                            <li class="positive">Files are recoverable</li>
+                            <li class="positive">Mistakes can be undone</li>
+                            <li class="positive">rm-compatible interface</li>
+                            <li class="positive">Cross-platform support</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section id="features" class="features">
+            <div class="container">
+                <h2>Features</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🗑️</div>
+                        <h3>Native Trash Integration</h3>
+                        <p>Uses the operating system's actual Trash or Recycle Bin on macOS, Linux, and Windows.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">💻</div>
+                        <h3>Cross-Platform</h3>
+                        <p>Works on macOS, Linux, and Windows with consistent behavior across platforms.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔄</div>
+                        <h3>rm Compatible</h3>
+                        <p>Familiar command-line interface with support for common options like -r, -f, -v.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔒</div>
+                        <h3>Safe by Default</h3>
+                        <p>Never silently falls back to permanent deletion. Always reports errors.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📁</div>
+                        <h3>Recursive Safe</h3>
+                        <p>Directories are moved to Trash as recoverable units, not deleted file-by-file.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🛡️</div>
+                        <h3>Root Protection</h3>
+                        <p>Protects against dangerous operations on root and home directories by default.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Platform Support -->
+        <section class="platforms">
+            <div class="container">
+                <h2>Platform Support</h2>
+                <div class="platform-grid">
+                    <div class="platform-card">
+                        <h3>macOS</h3>
+                        <p>Uses NSFileManager API for native Finder Trash integration.</p>
+                        <span class="platform-status">Supported</span>
+                    </div>
+                    <div class="platform-card">
+                        <h3>Linux</h3>
+                        <p>Implements FreeDesktop.org Trash specification for GNOME, KDE, XFCE.</p>
+                        <span class="platform-status">Supported</span>
+                    </div>
+                    <div class="platform-card">
+                        <h3>Windows</h3>
+                        <p>Uses IFileOperation API for actual Recycle Bin integration.</p>
+                        <span class="platform-status">Supported</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Interactive Demo -->
+        <section id="demo" class="demo">
+            <div class="container">
+                <h2>Interactive Demo</h2>
+                <p class="demo-description">
+                    Try srm in a simulated terminal. This demo runs entirely in your browser
+                    and does not access your actual filesystem.
+                </p>
+                <div class="demo-container">
+                    <div class="demo-layout">
+                        <div class="demo-filetree">
+                            <div class="filetree-header">
+                                <h3>File System</h3>
+                                <button id="reset-demo" class="btn btn-small">Reset</button>
+                            </div>
+                            <div id="filetree" class="filetree-content">
+                                <!-- Populated by JavaScript -->
+                            </div>
+                        </div>
+                        <div class="demo-terminal-wrapper">
+                            <div class="demo-terminal">
+                                <div class="terminal-header">
+                                    <div class="terminal-buttons">
+                                        <span class="terminal-button close"></span>
+                                        <span class="terminal-button minimize"></span>
+                                        <span class="terminal-button maximize"></span>
+                                    </div>
+                                    <span class="terminal-title">srm Demo Terminal</span>
+                                </div>
+                                <div id="terminal-output" class="terminal-output">
+                                    <div class="terminal-line">
+                                        <span class="prompt">user@demo:~$</span>
+                                        <span class="command">srmi --version</span>
+                                    </div>
+                                    <div class="terminal-line output">
+                                        <span class="output-text">srm (Safe RM) version 1.0.0</span>
+                                    </div>
+                                    <div class="terminal-line">
+                                        <span class="prompt">user@demo:~$</span>
+                                        <span class="cursor"> </span>
+                                    </div>
+                                </div>
+                                <div class="terminal-input-line">
+                                    <span class="prompt">user@demo:~$</span>
+                                    <input type="text" id="terminal-input" class="terminal-input" placeholder="Type a command..." autocomplete="off" spellcheck="false">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="demo-trash">
+                            <div class="trash-header">
+                                <h3>Trash</h3>
+                                <button id="empty-trash" class="btn btn-small">Empty</button>
+                            </div>
+                            <div id="trash-contents" class="trash-content">
+                                <p class="empty-message">Trash is empty</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="demo-help">
+                    <h3>Available Commands</h3>
+                    <ul>
+                        <li><code>srm &lt;file&gt;</code> - Move file to Trash</li>
+                        <li><code>srm -r &lt;dir&gt;</code> - Move directory to Trash recursively</li>
+                        <li><code>srm -v &lt;file&gt;</code> - Verbose output</li>
+                        <li><code>srm -f &lt;file&gt;</code> - Force mode (ignore missing files)</li>
+                        <li><code>ls</code> - List files</li>
+                        <li><code>srmi --help</code> - Show help</li>
+                        <li><code>restore &lt;file&gt;</code> - Restore from Trash</li>
+                        <li><code>clear</code> - Clear terminal</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Installation -->
+        <section id="install" class="install">
+            <div class="container">
+                <h2>Installation</h2>
+                <div class="install-tabs">
+                    <button class="tab-button active" data-tab="macos">macOS</button>
+                    <button class="tab-button" data-tab="linux">Linux</button>
+                    <button class="tab-button" data-tab="windows">Windows</button>
+                </div>
+                <div class="install-content">
+                    <div id="macos" class="tab-content active">
+                        <pre><code># Clone the repository
+git clone https://github.com/live-by-unix/srm.git
+cd srm
+
+# Build the native helper
+cd src
+./build-macos.sh
+cd ..
+
+# Install
+./scripts/install.sh
+
+# Add to PATH (add to ~/.zshrc or ~/.bashrc)
+export PATH="$HOME/bin:$PATH"</code></pre>
+                    </div>
+                    <div id="linux" class="tab-content">
+                        <pre><code># Clone the repository
+git clone https://github.com/live-by-unix/srm.git
+cd srm
+
+# Install (no build required for Linux)
+./scripts/install.sh
+
+# Add to PATH (add to ~/.bashrc or ~/.zshrc)
+export PATH="$HOME/bin:$PATH"</code></pre>
+                    </div>
+                    <div id="windows" class="tab-content">
+                        <pre><code># Clone the repository
+git clone https://github.com/live-by-unix/srm.git
+cd srm
+
+# Build the native helper (requires Visual Studio)
+cd src
+build-windows.bat
+cd ..
+
+# Install
+scripts\install.bat
+
+# Add to PATH via System Properties > Environment Variables</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Documentation Links -->
+        <section id="docs" class="docs">
+            <div class="container">
+                <h2>Documentation</h2>
+                <div class="docs-grid">
+                    <a href="https://github.com/live-by-unix/srm/blob/main/README.md" class="doc-link">
+                        <h3>README</h3>
+                        <p>Overview and quick start guide</p>
+                    </a>
+                    <a href="https://github.com/live-by-unix/srm/blob/main/USAGE.md" class="doc-link">
+                        <h3>Usage Guide</h3>
+                        <p>Detailed usage instructions and examples</p>
+                    </a>
+                    <a href="https://github.com/live-by-unix/srm/blob/main/INSTALL.md" class="doc-link">
+                        <h3>Installation</h3>
+                        <p>Installation instructions for all platforms</p>
+                    </a>
+                    <a href="https://github.com/live-by-unix/srm/blob/main/WINDOWS.md" class="doc-link">
+                        <h3>Windows Docs</h3>
+                        <p>Windows-specific documentation</p>
+                    </a>
+                    <a href="https://github.com/live-by-unix/srm/blob/main/COMPATIBILITY.md" class="doc-link">
+                        <h3>Compatibility</h3>
+                        <p>Platform and rm compatibility details</p>
+                    </a>
+                    <a href="https://github.com/live-by-unix/srm/blob/main/FAQ.md" class="doc-link">
+                        <h3>FAQ</h3>
+                        <p>Frequently asked questions</p>
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>srm</h4>
+                    <p>Safe RM - Cross-platform safe deletion</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Links</h4>
+                    <ul>
+                        <li><a href="https://github.com/live-by-unix/srm">GitHub Repository</a></li>
+                        <li><a href="https://github.com/live-by-unix/srm/issues">Issues</a></li>
+                        <li><a href="https://github.com/live-by-unix/srm/blob/main/LICENSE">License</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Author</h4>
+                    <p>live-by-unix</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>Copyright &copy; 2026 live-by-unix. BSD 3-Clause License.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="demo.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
